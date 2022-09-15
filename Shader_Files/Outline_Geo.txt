@@ -1,0 +1,92 @@
+#version 330 core
+layout (triangles) in;
+layout (triangle_strip, max_vertices = 3) out;
+
+in VS_OUT {
+    vec3 normal;
+    vec2 texCoords;
+} gs_in[];
+
+
+uniform mat4 proj;
+
+uniform sampler2D curveMap;
+uniform vec3 light_pos;
+vec3 lightDir;
+
+
+float get_offset(float brightness, float curvature){
+
+    float Cz = 0.5;
+    float Cd = 0.4 - (0.6 * brightness);
+    float Ck = 1.0 - curvature;
+    float offset = Cz * Ck * Cd;
+
+    offset = clamp(offset, 0.005, 0.04);
+    return offset;
+
+}
+
+float omit_line(float offset, float brightness, float curvature){
+
+    float a = 0.85;
+    float result = (a * offset) - (max(curvature, brightness) * offset);
+    return result;
+
+}
+
+
+vec4 move_outline(vec4 position, vec3 normal, float offset, float brightness, float curvature){
+
+    vec3 direction = normal * offset;
+    float omission = omit_line(offset, brightness, curvature);
+
+    if (omission > 0){
+        return position + vec4(direction, 0.0);
+    }
+    else 
+        return position;
+}
+
+
+void main()
+{
+    
+    float offset;
+    float brightness;
+    float curvature;
+
+    // Move first vertex of triangle ---------------------------------------------------------------------
+
+    lightDir = normalize(vec3(light_pos - vec3(gl_in[0].gl_Position)));
+    brightness = dot(lightDir, normalize(gs_in[0].normal));
+    curvature = texture(curveMap, gs_in[0].texCoords).r;
+    offset = get_offset(brightness, curvature);
+
+    gl_Position = proj * move_outline(gl_in[0].gl_Position, gs_in[0].normal, offset, brightness, curvature);
+    EmitVertex();
+
+    // Move second vertex of triangle ---------------------------------------------------------------------
+
+    lightDir = normalize(vec3(light_pos - vec3(gl_in[1].gl_Position)));
+    brightness = dot(lightDir, normalize(gs_in[1].normal));
+    curvature = texture(curveMap, gs_in[1].texCoords).r;
+    offset = get_offset(brightness, curvature);
+
+    gl_Position = proj * move_outline(gl_in[1].gl_Position, gs_in[1].normal, offset, brightness, curvature);
+    EmitVertex();
+
+    //  Move third vertex of triangle ---------------------------------------------------------------------
+
+    lightDir = normalize(vec3(light_pos - vec3(gl_in[2].gl_Position)));
+    brightness = dot(lightDir, normalize(gs_in[2].normal));
+    curvature = texture(curveMap, gs_in[2].texCoords).r;
+    offset = get_offset(brightness, curvature);
+
+    gl_Position = proj * move_outline(gl_in[2].gl_Position, gs_in[2].normal, offset, brightness, curvature);
+    EmitVertex();
+
+
+
+    EndPrimitive();
+}

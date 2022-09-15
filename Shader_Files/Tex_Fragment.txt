@@ -1,0 +1,29 @@
+// Created using LearnOpenGL online textbook https://learnopengl.com/About
+#version 330
+
+in vec2 TexCoord;
+uniform sampler2D texture1;
+
+in vec3 normal;
+in vec3 lightDir;
+in vec3 pos;
+
+void main(){
+
+
+	vec3 viewDir = normalize(-pos);
+	float intensity;
+	vec3 n = normalize(normal);
+
+	vec4 color;
+
+	intensity = dot(lightDir, normal);
+
+    	if (intensity > 0)
+        color = texture(texture1, TexCoord);
+
+//	if (intensity > 0)
+  //      color = vec4(1.0, 1.0, 1.0, 1.0);
+
+	gl_FragColor = color;
+}

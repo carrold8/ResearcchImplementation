@@ -1,0 +1,25 @@
+#version 330
+
+
+in vec3 normal;
+in vec3 pos;
+
+vec3 LightPosition = vec3 (5.0, 10.0, 5.0); // Light position in world coords.
+vec3 lightDir;
+
+void main(){
+
+    lightDir = normalize(vec3(LightPosition - pos));
+    vec3 viewDir = normalize(-pos);
+    float intensity;
+    vec3 n = normalize(normal);
+
+    vec4 color;
+    intensity = dot(lightDir, normal);
+
+    if (intensity > 0)
+        color = vec4(1.0, 1.0, 1.0, 1.0);
+
+
+     gl_FragColor = color;
+}
